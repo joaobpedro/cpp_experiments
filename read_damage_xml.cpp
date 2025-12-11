@@ -137,5 +137,7 @@ int main() {
   std::cout << "------- printing the gpos data --------" << std::endl;
   std::cout << get_all_gpos(file_content, "fx_gpos") << std::endl;
 
+  std::cout << "This is a test" << std::endl;
+
   return 0;
 }
