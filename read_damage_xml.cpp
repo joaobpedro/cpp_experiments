@@ -51,7 +51,7 @@ std::string get_max_damage(const std::string &xml_data, const std::string locati
   // position
 
   std::string start_tag = "<fx_gpos " + location + ">";
-  std::string end_tag = "</fx_pos>";
+  std::string end_tag = "</fx_gpos>";
   std::string damage_tag = "<fx_damage_wire_pos";
   std::string damage_str;
   long double damage_number = 0.0;
@@ -70,7 +70,7 @@ std::string get_max_damage(const std::string &xml_data, const std::string locati
   // arranege a subspace for the real seacrh
   std::string xml_sample = xml_data.substr(start_position, end_position - start_position);
 
-  pointer_position = 0;
+  pointer_position = start_position;
 
   size_t damage_pos;
   const size_t chunk = 32 * sizeof(char);
@@ -216,9 +216,9 @@ int main() {
 
   std::vector<std::string> gpos_list = split(gpos_2, ' ');
   std::vector<std::string> damage_list;
-  for (const auto &gpos : gpos_list) {
-    std::cout << gpos << std::endl;
-    damage_list.push_back(get_max_damage(file_content, gpos));
+  for (int i =1; i <= 8; i++) {
+    std::cout << gpos_list[i] << std::endl;
+    damage_list.push_back(get_max_damage(file_content, gpos_list[i]));
   }
 
   for (const auto &damages : damage_list) {
