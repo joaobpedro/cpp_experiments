@@ -1,14 +1,16 @@
 #include <fstream>
+#include <iomanip>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <vector> //this is a list basically
 
-
 void clean_string(std::string &cleanee, const std::string &cleaner) {
   // cleanee -> name="GA1194500inner"
   // cleaner -> name="GA
-  
+
   size_t start_pos = cleanee.find(cleaner);
   if (start_pos == std::string::npos) {
     cleanee.clear();
@@ -19,11 +21,20 @@ void clean_string(std::string &cleanee, const std::string &cleaner) {
     cleanee.clear();
   }
 
-  std::string clean_string = cleanee.erase(start_pos, end_position-1);
+  std::string clean_string = cleanee.erase(start_pos, end_position);
 }
 
+template <typename T> std::string to_long_string(T value) {
 
-std::vector<std::string> split(const std::string& s, char seperator) {
+  std::stringstream string_stream;
+
+  string_stream << std::setprecision(std::numeric_limits<T>::max_digits10);
+  string_stream << value;
+
+  return string_stream.str();
+}
+
+std::vector<std::string> split(const std::string &s, char seperator) {
   std::vector<std::string> tokens;
   std::string token;
   std::istringstream token_stream(s);
@@ -35,14 +46,15 @@ std::vector<std::string> split(const std::string& s, char seperator) {
   return tokens;
 }
 
-
-std::string get_max_damage(const std::string& xml_data, const std::string location){
-  // the function gets a location and returns the maximum damage for that position
+std::string get_max_damage(const std::string &xml_data, const std::string location) {
+  // the function gets a location and returns the maximum damage for that
+  // position
 
   std::string start_tag = "<fx_gpos " + location + ">";
-  std::string end_tag = "</fx_pos>";  
+  std::string end_tag = "</fx_pos>";
   std::string damage_tag = "<fx_damage_wire_pos";
   std::string damage_str;
+  long double damage_number = 0.0;
   size_t pointer_position;
 
   size_t start_position = xml_data.find(start_tag);
@@ -50,27 +62,41 @@ std::string get_max_damage(const std::string& xml_data, const std::string locati
     return "";
   }
 
-  pointer_position = start_position;
+  size_t end_position = xml_data.find(end_tag, start_position);
+  if (end_position == std::string::npos) {
+    return "";
+  }
+
+  // arranege a subspace for the real seacrh
+  std::string xml_sample = xml_data.substr(start_position, end_position - start_position);
+
+  pointer_position = 0;
+
+  size_t damage_pos;
+  const size_t chunk = 32 * sizeof(char);
 
   while (true) {
-    size_t damage_pos = xml_data.find(damage_tag, pointer_position);
+    damage_pos = xml_sample.find(damage_tag, pointer_position);
     if (damage_pos == std::string::npos) {
       break;
     }
     damage_pos += damage_tag.length(); // advancing the pointer to the end of the tag
-    // the size of the damage word is hard coded
-    size_t chunk = 32 * sizeof(char);
-    damage_str = xml_data.substr(damage_pos, chunk);
+    damage_str = xml_sample.substr(damage_pos, chunk);
     clean_string(damage_str, " damage=\"");
-    clean_string(damage_str,"\"");
+    clean_string(damage_str, "\"");
 
-    pointer_position += damage_pos;
+    if (damage_number < std::stof(damage_str)) {
+      damage_number = std::stof(damage_str);
+    }
+
+    pointer_position = damage_pos; // move the pointer to the damage_pos
     // std::cout << damage_str << std::endl;
   }
 
+  damage_str = to_long_string(damage_number);
+
   return damage_str;
 }
-
 
 std::string get_value(const std::string &xml_data, const std::string &tag) {
   // function to extract the value of a given field from tag
@@ -91,7 +117,6 @@ std::string get_value(const std::string &xml_data, const std::string &tag) {
 
   return xml_data.substr(start_position, end_position - start_position);
 }
-
 
 std::string get_attribute(const std::string &xml_data, const std::string &tag) {
   // opening and closing tags
@@ -114,7 +139,6 @@ std::string get_attribute(const std::string &xml_data, const std::string &tag) {
   return xml_data.substr(start_position, closing_position - start_position);
 }
 
-
 std::string get_all_gpos(const std::string &xml_data, const std::string &tag) {
   // initiating position
   size_t reader_position = 0;
@@ -124,34 +148,36 @@ std::string get_all_gpos(const std::string &xml_data, const std::string &tag) {
   std::string start_tag = "<" + tag;
   std::string end_tag = "</" + tag + ">";
 
+  size_t start_position;
+  size_t closing_position;
+  size_t end_position;
+
   while (true) {
-    size_t start_position = xml_data.find(start_tag, reader_position);
+    start_position = xml_data.find(start_tag, reader_position);
     if (start_position == std::string::npos) {
       break;
     };
     start_position += start_tag.length(); // moving the postion to contents
 
-    size_t closing_postion = xml_data.find(">", start_position);
-    if (closing_postion == std::string::npos) {
+    closing_position = xml_data.find(">", start_position);
+    if (closing_position == std::string::npos) {
       break;
     };
 
-    single_gpos = xml_data.substr(start_position, closing_postion - start_position);
-    // clean_string(single_gpos, "name=\"GA");
-    // clean_string(single_gpos, "inner");
+    single_gpos =
+        xml_data.substr(start_position, closing_position - start_position);
     gpos += single_gpos;
 
-    size_t end_position = xml_data.find(end_tag, closing_postion);
-    if( end_position == std::string::npos) {
+    end_position = xml_data.find(end_tag, closing_position);
+    if (end_position == std::string::npos) {
       break;
     };
 
     reader_position = end_position + end_tag.length();
   };
-  
+
   return gpos;
 }
-
 
 int main() {
   // open document
@@ -189,13 +215,15 @@ int main() {
   std::cout << gpos_2 << std::endl;
 
   std::vector<std::string> gpos_list = split(gpos_2, ' ');
-  for (const auto& gpos : gpos_list) {
+  std::vector<std::string> damage_list;
+  for (const auto &gpos : gpos_list) {
     std::cout << gpos << std::endl;
-    // get_max_damage(file_content, gpos);
-    // break;
+    damage_list.push_back(get_max_damage(file_content, gpos));
   }
-  std::string string_test = get_max_damage(file_content, gpos_list[1]);
-  std::cout << string_test << std::endl;
+
+  for (const auto &damages : damage_list) {
+    std::cout << damages << std::endl;
+  }
 
   return 0;
 }
