@@ -56,6 +56,8 @@ std::string get_max_damage(const std::string &xml_data, const std::string locati
   std::string damage_str;
   long double damage_number = 0.0;
   size_t pointer_position;
+  size_t damage_pos;
+  const size_t chunk = 32 * sizeof(char);
 
   size_t start_position = xml_data.find(start_tag);
   if (start_position == std::string::npos) {
@@ -70,10 +72,8 @@ std::string get_max_damage(const std::string &xml_data, const std::string locati
   // arranege a subspace for the real seacrh
   std::string xml_sample = xml_data.substr(start_position, end_position - start_position);
 
-  pointer_position = start_position;
+  pointer_position = 0;
 
-  size_t damage_pos;
-  const size_t chunk = 32 * sizeof(char);
 
   while (true) {
     damage_pos = xml_sample.find(damage_tag, pointer_position);
