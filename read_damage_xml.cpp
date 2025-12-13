@@ -1,8 +1,8 @@
 #include <fstream>
 #include <iomanip>
-#include <iomanip>
 #include <iostream>
 #include <limits>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <vector> //this is a list basically
@@ -46,7 +46,8 @@ std::vector<std::string> split(const std::string &s, char seperator) {
   return tokens;
 }
 
-std::string get_max_damage(const std::string &xml_data, const std::string location) {
+std::string get_max_damage(const std::string &xml_data,
+                           const std::string location) {
   // the function gets a location and returns the maximum damage for that
   // position
 
@@ -70,17 +71,18 @@ std::string get_max_damage(const std::string &xml_data, const std::string locati
   }
 
   // arranege a subspace for the real seacrh
-  std::string xml_sample = xml_data.substr(start_position, end_position - start_position);
+  std::string xml_sample =
+      xml_data.substr(start_position, end_position - start_position);
 
   pointer_position = 0;
-
 
   while (true) {
     damage_pos = xml_sample.find(damage_tag, pointer_position);
     if (damage_pos == std::string::npos) {
       break;
     }
-    damage_pos += damage_tag.length(); // advancing the pointer to the end of the tag
+    damage_pos +=
+        damage_tag.length(); // advancing the pointer to the end of the tag
     damage_str = xml_sample.substr(damage_pos, chunk);
     clean_string(damage_str, " damage=\"");
     clean_string(damage_str, "\"");
@@ -179,6 +181,31 @@ std::string get_all_gpos(const std::string &xml_data, const std::string &tag) {
   return gpos;
 }
 
+int write_csv(std::string filename, std::vector<std::string> vector1,
+              std::vector<std::string> vector2) {
+  // this function takes two vectors and writes then in the a
+  // csv file
+  // note that this does not check the vector size for consitency
+
+  std::ofstream file(filename);
+  if (!file.is_open()) {
+    return 1;
+  }
+
+  file << "Arc Length, Damage \n";
+
+  if (vector1.size() == vector2.size()) {
+    for (int i = 0; i < vector1.size(); i++) {
+      file << vector1[i] + "," + vector2[i] + "\n";
+    }
+  } else {
+    return 1;
+  }
+
+  file.close();
+  return 0;
+}
+
 int main() {
   // open document
   std::ifstream file("./G07_TDP_intact_NOV_SN_Corrosive_inner_worst.xml");
@@ -216,14 +243,23 @@ int main() {
 
   std::vector<std::string> gpos_list = split(gpos_2, ' ');
   std::vector<std::string> damage_list;
-  for (int i =1; i <= 8; i++) {
+  std::vector<std::string> gpos_value_list;
+  for (int i = 1; i <= 8; i++) {
     std::cout << gpos_list[i] << std::endl;
     damage_list.push_back(get_max_damage(file_content, gpos_list[i]));
+    clean_string(gpos_list[i], "name=");
+    clean_string(gpos_list[i], "inner");
+    clean_string(gpos_list[i], "\"GA");
+    gpos_value_list.push_back(gpos_list[i]);
   }
 
   for (const auto &damages : damage_list) {
     std::cout << damages << std::endl;
   }
+
+  // gpos_value_list.erase(gpos_list.begin());
+
+  write_csv("test.csv", gpos_value_list, damage_list);
 
   return 0;
 }
