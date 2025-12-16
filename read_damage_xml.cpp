@@ -8,7 +8,7 @@
 #include <vector> //this is a list basically
 
 void clean_string(std::string &cleanee, const std::string &cleaner) {
-  // cleanee -> name="GA1194500inner"
+  // cleanee -> name="GA1194500outer"
   // cleaner -> name="GA
 
   size_t start_pos = cleanee.find(cleaner);
@@ -206,9 +206,15 @@ int write_csv(std::string filename, std::vector<std::string> vector1,
   return 0;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   // open document
-  std::ifstream file("./G07_TDP_intact_NOV_SN_Corrosive_inner_worst.xml");
+  // std::string filename;
+  if (argc == 2) {
+    std::string filename = argv[2];
+    std::ifstream file(filename);
+  } else {
+    return 256;
+  }
 
   // handle error
   if (!file.is_open()) {
@@ -248,7 +254,13 @@ int main() {
     std::cout << gpos_list[i] << std::endl;
     damage_list.push_back(get_max_damage(file_content, gpos_list[i]));
     clean_string(gpos_list[i], "name=");
-    clean_string(gpos_list[i], "inner");
+
+    if (filename.find("outer") != std::string::npos) {
+      clean_string(gpos_list[i], "outer");
+    } else {
+      clean_string(gpos_list[i], "inner");
+    }
+
     clean_string(gpos_list[i], "\"GA");
     gpos_value_list.push_back(gpos_list[i]);
   }
