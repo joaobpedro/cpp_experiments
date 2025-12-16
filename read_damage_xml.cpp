@@ -210,8 +210,10 @@ int main(int argc, char *argv[]) {
   // open document
   std::string filename;
   std::ifstream file;
+  // std::vector<std::string> prefixes;
+  std::string prefix;
   if (argc == 2) {
-    std::string filename = argv[1];
+    filename = argv[1];
     file.open(filename);
     // handle error
     if (!file.is_open()) {
@@ -221,6 +223,8 @@ int main(int argc, char *argv[]) {
   } else {
     return 256;
   }
+
+  prefix = filename.substr(0, filename.length()-4);
 
   // read the entire file
   std::stringstream buffer;
@@ -257,7 +261,7 @@ int main(int argc, char *argv[]) {
     std::cout << damages << std::endl;
   }
 
-  write_csv("test.csv", gpos_value_list, damage_list);
+  write_csv(prefix + ".csv", gpos_value_list, damage_list);
 
   return 0;
 }
