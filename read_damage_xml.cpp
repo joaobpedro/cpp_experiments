@@ -208,18 +208,18 @@ int write_csv(std::string filename, std::vector<std::string> vector1,
 
 int main(int argc, char *argv[]) {
   // open document
-  // std::string filename;
+  std::string filename;
+  std::ifstream file;
   if (argc == 2) {
-    std::string filename = argv[2];
-    std::ifstream file(filename);
+    std::string filename = argv[1];
+    file.open(filename);
+    // handle error
+    if (!file.is_open()) {
+      std::cout << "Error opening the file" << std::endl;
+      return 1;
+    }
   } else {
     return 256;
-  }
-
-  // handle error
-  if (!file.is_open()) {
-    std::cout << "Error opening the file" << std::endl;
-    return 1;
   }
 
   // read the entire file
@@ -230,19 +230,7 @@ int main(int argc, char *argv[]) {
 
   std::cout << "----------- Processing the XML file ----------" << std::endl;
 
-  // test the processing
-
-  std::string damage_loadcase = get_value(file_content, "fx_damage_loadcase");
-
-  // print the data extract
-  std::cout << "Printing the content of a tag" << std::endl;
-  std::cout << damage_loadcase << std::endl;
-
-  // print the atributes of a tag
-  std::cout << "Printing the attributes of a tag" << std::endl;
-  std::cout << get_attribute(file_content, "fx_gpos") << std::endl;
-
-  // print all positions as test
+  // get all damage positions available in xml file
   std::cout << "------- printing the gpos data --------" << std::endl;
   std::string gpos_2 = get_all_gpos(file_content, "fx_gpos");
   std::cout << gpos_2 << std::endl;
@@ -268,8 +256,6 @@ int main(int argc, char *argv[]) {
   for (const auto &damages : damage_list) {
     std::cout << damages << std::endl;
   }
-
-  // gpos_value_list.erase(gpos_list.begin());
 
   write_csv("test.csv", gpos_value_list, damage_list);
 
