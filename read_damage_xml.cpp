@@ -7,6 +7,18 @@
 #include <string>
 #include <vector> //this is a list basically
 
+struct Cycles_Hist {
+  std::vector<long> stress_range;
+  std::vector<int> stress_cycles;
+};
+
+struct Damage_Pos {
+  std::string position;
+  std::string max_damage;
+  std::string wire;
+  Cycles_Hist* damage_hist;
+};
+
 void clean_string(std::string &cleanee, const std::string &cleaner) {
   // cleanee -> name="GA1194500outer"
   // cleaner -> name="GA
@@ -206,6 +218,23 @@ int write_csv(std::string filename, std::vector<std::string> vector1,
   return 0;
 }
 
+
+Damage_Pos get_maximum_damage_position (const std::string& xml_data) {
+  // this function retrives the piece of text that contains the maximum damage position
+
+  // declare the damge_pos strcuture
+  Damage_Pos damage_info;
+  std::string entry_tag = "<max_damage_location";
+  std::string position_tag = "gpos=";
+  std::string damage_tag = "damage=";
+  std::string wire_tag = "wire="
+  std::string wire_pos_tag = "wpos=";
+
+  
+
+  return damage_info;
+}
+
 int main(int argc, char *argv[]) {
   // open document
   std::string filename;
@@ -242,17 +271,16 @@ int main(int argc, char *argv[]) {
   std::vector<std::string> gpos_list = split(gpos_2, ' ');
   std::vector<std::string> damage_list;
   std::vector<std::string> gpos_value_list;
+
   for (int i = 1; i <= 8; i++) {
     std::cout << gpos_list[i] << std::endl;
     damage_list.push_back(get_max_damage(file_content, gpos_list[i]));
     clean_string(gpos_list[i], "name=");
-
     if (filename.find("outer") != std::string::npos) {
       clean_string(gpos_list[i], "outer");
     } else {
       clean_string(gpos_list[i], "inner");
     }
-
     clean_string(gpos_list[i], "\"GA");
     gpos_value_list.push_back(gpos_list[i]);
   }
@@ -263,5 +291,10 @@ int main(int argc, char *argv[]) {
 
   write_csv(prefix + ".csv", gpos_value_list, damage_list);
 
+  // TODO: fill the damage position structure
+  // TODO: get the piece of text corresponding the max damage
+  // TODO: fill in the cycles structure
+
+  Damage_Pos cycles = get_maximum_damage_position(file_content);
   return 0;
 }
