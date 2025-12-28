@@ -14,7 +14,7 @@ struct Cycles_Hist {
 
 struct Damage_Pos {
   std::string position;
-  std::string max_damage;
+  std::string damage;
   std::string wire;
   Cycles_Hist* damage_hist;
 };
@@ -220,17 +220,54 @@ int write_csv(std::string filename, std::vector<std::string> vector1,
 
 
 Damage_Pos get_maximum_damage_position (const std::string& xml_data) {
-  // this function retrives the piece of text that contains the maximum damage position
+  // this function retrives the piece of text that contains the maximum damage
+  // position
 
   // declare the damge_pos strcuture
   Damage_Pos damage_info;
   std::string entry_tag = "<max_damage_location";
+  std::string closing_tag = "/>";
   std::string position_tag = "gpos=";
   std::string damage_tag = "damage=";
-  std::string wire_tag = "wire="
+  std::string wire_tag = "wire=";
   std::string wire_pos_tag = "wpos=";
+  std::string data_line;
+  std::vector<std::string> data_items;
+  std::string word;
 
-  
+  // first lets got the the line where the max damage is stored
+  // this starts at the start
+  size_t start_position = xml_data.find(entry_tag, 0);
+  if (start_position == std::string::npos) {
+    damage_info.position = "0xCDCD";
+    return damage_info;
+  }
+
+  size_t end_position = xml_data.find(closing_tag, start_position);
+  if (end_position == std::string::npos) {
+    damage_info.position = "0xEEEE";
+    return damage_info;
+  }
+
+  data_line = xml_data.substr(start_position, end_position - start_position);
+  // seperate the data line into different data items
+  data_items = split(data_line, ' ');
+
+  for (int i = 0; i < data_items.size(); i++) {
+    word = data_items[i];
+    if (word.find(position_tag) != std::string::npos){
+      clean_string(word, position_tag);
+      damage_info.position = word;
+    }
+    if (word.find(damage_tag) != std::string::npos){
+      clean_string(word, damage_tag);
+      damage_info.damage = word; 
+    }
+    if (word.find(wire_tag) != std::string::npos){
+      clean_string(word, wire_tag);
+      damage_info.wire = word;
+    }
+  }
 
   return damage_info;
 }
@@ -296,5 +333,6 @@ int main(int argc, char *argv[]) {
   // TODO: fill in the cycles structure
 
   Damage_Pos cycles = get_maximum_damage_position(file_content);
+  std::cout << cycles.position << std::endl;
   return 0;
 }
