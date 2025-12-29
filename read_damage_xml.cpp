@@ -272,6 +272,38 @@ Damage_Pos get_maximum_damage_position (const std::string& xml_data) {
   return damage_info;
 }
 
+std::string get_histogram_text(std::string& xml_data, 
+                                Damage_Pos& position_data) {
+  // get the chunk of text from xmldata. 
+  std::string cycles_open_tag = "<cycles_histogram";
+  std::string cycles_close_tag = "</cycles_histogram>";
+  std::string pos_open_tag = "<fx_gpos name=" + position_data.position;
+  std::string wire_open_tag = "<fx_wire name=" + position_data.wire;
+   
+  size_t start_position = xml_data.find(pos_open_tag, 0);
+  if (start_position == std::string::npos) {
+    return "0xDDDD";
+  }
+
+  size_t wire_position = xml_data.find(wire_open_tag, start_position);
+  if (wire_position == std::string::npos) {
+    return "0xCCCCC";
+  }
+
+  size_t cycle_start_position = xml_data.find(cycles_open_tag, wire_position);
+  if (cycle_start_position == std::string::npos) {
+    return "0xRRRRR";
+  }
+
+  size_t cycles_end_position = xml_data.find(cycles_close_tag, cycle_start_position);
+  if (cycles_end_position == std::string::npos) {
+    return "0xPPPPP";
+  }
+  std::string text_chunk = xml_data.substr(cycle_start_position, cycles_end_position - cycle_start_position);
+  
+  return text_chunk;
+}
+
 int main(int argc, char *argv[]) {
   // open document
   std::string filename;
@@ -333,6 +365,15 @@ int main(int argc, char *argv[]) {
   // TODO: fill in the cycles structure
 
   Damage_Pos cycles = get_maximum_damage_position(file_content);
-  std::cout << cycles.position << std::endl;
+  std::cout << cycles.wire << std::endl;
+
+  Cycles_Hist stress_histogram;
+  // do I need this? anyway this is just an exercise
+  cycles.damage_hist = &stress_histogram;
+
+  std::string histogram_text = get_histogram_text(file_content, cycles);
+  std::cout << histogram_text << std::endl;
+  // stress_histogram = get_histogram();
+  
   return 0;
 }
