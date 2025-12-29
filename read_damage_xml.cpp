@@ -8,15 +8,15 @@
 #include <vector> //this is a list basically
 
 struct Cycles_Hist {
-  std::vector<long> stress_range;
-  std::vector<int> stress_cycles;
+  std::vector<std::string> stress_range;
+  std::vector<std::string> stress_cycles;
 };
 
 struct Damage_Pos {
   std::string position;
   std::string damage;
   std::string wire;
-  Cycles_Hist* damage_hist;
+  Cycles_Hist *damage_hist;
 };
 
 void clean_string(std::string &cleanee, const std::string &cleaner) {
@@ -218,8 +218,7 @@ int write_csv(std::string filename, std::vector<std::string> vector1,
   return 0;
 }
 
-
-Damage_Pos get_maximum_damage_position (const std::string& xml_data) {
+Damage_Pos get_maximum_damage_position(const std::string &xml_data) {
   // this function retrives the piece of text that contains the maximum damage
   // position
 
@@ -255,15 +254,15 @@ Damage_Pos get_maximum_damage_position (const std::string& xml_data) {
 
   for (int i = 0; i < data_items.size(); i++) {
     word = data_items[i];
-    if (word.find(position_tag) != std::string::npos){
+    if (word.find(position_tag) != std::string::npos) {
       clean_string(word, position_tag);
       damage_info.position = word;
     }
-    if (word.find(damage_tag) != std::string::npos){
+    if (word.find(damage_tag) != std::string::npos) {
       clean_string(word, damage_tag);
-      damage_info.damage = word; 
+      damage_info.damage = word;
     }
-    if (word.find(wire_tag) != std::string::npos){
+    if (word.find(wire_tag) != std::string::npos) {
       clean_string(word, wire_tag);
       damage_info.wire = word;
     }
@@ -272,14 +271,14 @@ Damage_Pos get_maximum_damage_position (const std::string& xml_data) {
   return damage_info;
 }
 
-std::string get_histogram_text(std::string& xml_data, 
-                                Damage_Pos& position_data) {
-  // get the chunk of text from xmldata. 
+std::string get_histogram_text(std::string &xml_data,
+                               Damage_Pos &position_data) {
+  // get the chunk of text from xmldata.
   std::string cycles_open_tag = "<cycles_histogram";
   std::string cycles_close_tag = "</cycles_histogram>";
   std::string pos_open_tag = "<fx_gpos name=" + position_data.position;
   std::string wire_open_tag = "<fx_wire name=" + position_data.wire;
-   
+
   size_t start_position = xml_data.find(pos_open_tag, 0);
   if (start_position == std::string::npos) {
     return "0xDDDD";
@@ -295,18 +294,56 @@ std::string get_histogram_text(std::string& xml_data,
     return "0xRRRRR";
   }
 
-  size_t cycles_end_position = xml_data.find(cycles_close_tag, cycle_start_position);
+  size_t cycles_end_position =
+      xml_data.find(cycles_close_tag, cycle_start_position);
   if (cycles_end_position == std::string::npos) {
     return "0xPPPPP";
   }
-  std::string text_chunk = xml_data.substr(cycle_start_position, cycles_end_position - cycle_start_position);
-  
+  std::string text_chunk = xml_data.substr(
+      cycle_start_position, cycles_end_position - cycle_start_position);
+
   return text_chunk;
 }
 
-int get_histogram(const std::string& hist_text, Cycles_Hist& hist) {
-  // this will calculate the cumulative stress histogram and the 
+int get_histogram(const std::string &hist_text, Cycles_Hist &hist) {
+  // this will calculate the cumulative stress histogram and the
   // comulative cycle count
+
+  // first declare some tags as previous
+  std::string stress_range_tag = "<stress_range sigma_d=";
+  std::string stress_range_closing_tag = "</stress_range>";
+
+  std::string stress_mean_tag = "<stress_mean sigma_m=";
+  std::string value_tag = "value=";
+
+  // some pointers of reference
+  size_t pointer = 0;                 // initiate at zero position
+  size_t stress_range_start_position; // initiate at zero
+  size_t stress_range_end_position;   // initiate at zero
+  size_t stress_cycles_position;
+
+  // declaure some temp place holders
+  std::string stress_range_string;
+
+  while (pointer != std::string::npos) {
+    stress_range_start_position = hist_text.find(stress_range_tag, pointer);
+    if (stress_range_start_position == std::string::npos) {
+      return 0xCDCD;
+    }
+    stress_range_start_position += stress_range_tag.length();
+    stress_range_end_position =
+        hist_text.find(">", stress_range_start_position);
+    if (stress_range_end_position == std::string::npos) {
+      return 0xEEEEE;
+    }
+    stress_range_string = hist_text.substr(stress_range_start_position,
+                                           stress_range_end_position -
+                                               stress_range_start_position);
+    hist.stress_range.push_back(stress_range_string);
+    pointer = stress_range_end_position;
+    // break;
+  }
+
   return 0;
 }
 
@@ -328,7 +365,7 @@ int main(int argc, char *argv[]) {
     return 256;
   }
 
-  prefix = filename.substr(0, filename.length()-4);
+  prefix = filename.substr(0, filename.length() - 4);
 
   // read the entire file
   std::stringstream buffer;
@@ -380,6 +417,7 @@ int main(int argc, char *argv[]) {
   std::string histogram_text = get_histogram_text(file_content, cycles);
   std::cout << histogram_text << std::endl;
   get_histogram(histogram_text, stress_histogram);
-  
+  std::cout << stress_histogram.stress_range[1] << std::endl;
+
   return 0;
 }
