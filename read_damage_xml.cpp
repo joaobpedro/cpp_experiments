@@ -304,6 +304,12 @@ std::string get_histogram_text(std::string& xml_data,
   return text_chunk;
 }
 
+int get_histogram(const std::string& hist_text, Cycles_Hist& hist) {
+  // this will calculate the cumulative stress histogram and the 
+  // comulative cycle count
+  return 0;
+}
+
 int main(int argc, char *argv[]) {
   // open document
   std::string filename;
@@ -373,7 +379,7 @@ int main(int argc, char *argv[]) {
 
   std::string histogram_text = get_histogram_text(file_content, cycles);
   std::cout << histogram_text << std::endl;
-  // stress_histogram = get_histogram();
+  get_histogram(histogram_text, stress_histogram);
   
   return 0;
 }
