@@ -322,6 +322,7 @@ int get_histogram(const std::string &hist_text, Cycles_Hist &hist) {
 
   std::string value_str;
   std::string cycles_substr; // cycles temp string
+  std::string write_str;
 
   long cycles_total;
   long cycles_value;
@@ -341,13 +342,13 @@ int get_histogram(const std::string &hist_text, Cycles_Hist &hist) {
   while (pointer != std::string::npos) {
     stress_range_start_position = hist_text.find(stress_range_tag, pointer);
     if (stress_range_start_position == std::string::npos) {
-      return 0xCDCD;
+      break;
     }
     stress_range_start_position += stress_range_tag.length();
     stress_range_end_position =
         hist_text.find(">", stress_range_start_position);
     if (stress_range_end_position == std::string::npos) {
-      return 0xEEEEE;
+      break;
     }
     stress_range_string = hist_text.substr(stress_range_start_position,
                                            stress_range_end_position -
@@ -359,34 +360,37 @@ int get_histogram(const std::string &hist_text, Cycles_Hist &hist) {
 
     stress_cycles_end_position = hist_text.find(stress_range_closing_tag, pointer);
     if (stress_cycles_end_position == std::string::npos) {
-      return 0xFFFFF;
+      break;
     }
 
     cycles_substr= hist_text.substr(pointer, stress_cycles_end_position - pointer);
-    pointer_aux = stress_cycles_end_position;
+    pointer_aux = 0;
     cycles_total = 0;
     while (pointer_aux != std::string::npos) {
       stress_cycles_position = cycles_substr.find(value_tag, pointer_aux);
       if (stress_cycles_position == std::string::npos) {
-        return 0xEEEE;
+        break;
       }
       stress_cycles_position += value_tag.length();
-      stress_cycles_position_2 = cycles_substr.find("\">", stress_cycles_position);
+      stress_cycles_position_2 = cycles_substr.find("\"/>", stress_cycles_position);
       if (stress_cycles_position_2 == std::string::npos) {
-        return 0xAAAA;
+        break;
       }
       pointer_aux = stress_cycles_position_2;
       value_str = cycles_substr.substr(stress_cycles_position, stress_cycles_position_2-stress_cycles_position);
       
       //convert value string in a value
       clean_string(value_str, "\"");
-      clean_string(value_str, "\"");
+      // clean_string(value_str, "\"");
       cycles_value = std::stof(value_str);
       cycles_total += cycles_value;
+      value_str.clear();
     }
-
-    hist.stress_cycles.push_back(to_long_string(cycles_total));
-    return 0;
+    cycles_substr.clear();
+    write_str = to_long_string(cycles_total);
+    hist.stress_cycles.push_back(write_str);
+    write_str.clear();
+    // return 0;
   
     // break;
   }
@@ -474,5 +478,7 @@ int main(int argc, char *argv[]) {
     std::cout << "printing the cycle" << std::endl;
     std::cout << cycle << std::endl;
   }
+
+  write_csv("test_hist.csv", stress_histogram.stress_range, stress_histogram.stress_cycles);
   return 0;
 }
