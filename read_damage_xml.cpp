@@ -19,6 +19,10 @@ struct Damage_Pos {
   Cycles_Hist *damage_hist;
 };
 
+//
+// TODO: need to be recursive function to clean all characters of a string that 
+// is passed
+//
 void clean_string(std::string &cleanee, const std::string &cleaner) {
   // cleanee -> name="GA1194500outer"
   // cleaner -> name="GA
@@ -316,11 +320,20 @@ int get_histogram(const std::string &hist_text, Cycles_Hist &hist) {
   std::string stress_mean_tag = "<stress_mean sigma_m=";
   std::string value_tag = "value=";
 
+  std::string value_str;
+  std::string cycles_substr; // cycles temp string
+
+  long cycles_total;
+  long cycles_value;
+
   // some pointers of reference
   size_t pointer = 0;                 // initiate at zero position
+  size_t pointer_aux;
   size_t stress_range_start_position; // initiate at zero
   size_t stress_range_end_position;   // initiate at zero
   size_t stress_cycles_position;
+  size_t stress_cycles_position_2;
+  size_t stress_cycles_end_position;
 
   // declaure some temp place holders
   std::string stress_range_string;
@@ -338,9 +351,43 @@ int get_histogram(const std::string &hist_text, Cycles_Hist &hist) {
     }
     stress_range_string = hist_text.substr(stress_range_start_position,
                                            stress_range_end_position -
-                                               stress_range_start_position);
+                                           stress_range_start_position);
+    clean_string(stress_range_string, "\"");
+    clean_string(stress_range_string, "\""); //the clean_string function is not cleaning all characters of the same type
     hist.stress_range.push_back(stress_range_string);
     pointer = stress_range_end_position;
+
+    stress_cycles_end_position = hist_text.find(stress_range_closing_tag, pointer);
+    if (stress_cycles_end_position == std::string::npos) {
+      return 0xFFFFF;
+    }
+
+    cycles_substr= hist_text.substr(pointer, stress_cycles_end_position - pointer);
+    pointer_aux = stress_cycles_end_position;
+    cycles_total = 0;
+    while (pointer_aux != std::string::npos) {
+      stress_cycles_position = cycles_substr.find(value_tag, pointer_aux);
+      if (stress_cycles_position == std::string::npos) {
+        return 0xEEEE;
+      }
+      stress_cycles_position += value_tag.length();
+      stress_cycles_position_2 = cycles_substr.find("\">", stress_cycles_position);
+      if (stress_cycles_position_2 == std::string::npos) {
+        return 0xAAAA;
+      }
+      pointer_aux = stress_cycles_position_2;
+      value_str = cycles_substr.substr(stress_cycles_position, stress_cycles_position_2-stress_cycles_position);
+      
+      //convert value string in a value
+      clean_string(value_str, "\"");
+      clean_string(value_str, "\"");
+      cycles_value = std::stof(value_str);
+      cycles_total += cycles_value;
+    }
+
+    hist.stress_cycles.push_back(to_long_string(cycles_total));
+    return 0;
+  
     // break;
   }
 
@@ -415,9 +462,17 @@ int main(int argc, char *argv[]) {
   cycles.damage_hist = &stress_histogram;
 
   std::string histogram_text = get_histogram_text(file_content, cycles);
-  std::cout << histogram_text << std::endl;
+  // std::cout << histogram_text << std::endl;
   get_histogram(histogram_text, stress_histogram);
-  std::cout << stress_histogram.stress_range[1] << std::endl;
 
+  for (auto range:stress_histogram.stress_range){
+    std::cout << "printing the range" << std::endl;
+    std::cout << range << std::endl;
+  }
+
+  for (auto cycle:stress_histogram.stress_cycles) {
+    std::cout << "printing the cycle" << std::endl;
+    std::cout << cycle << std::endl;
+  }
   return 0;
 }
