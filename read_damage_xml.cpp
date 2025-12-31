@@ -178,6 +178,7 @@ std::string get_all_gpos(const std::string &xml_data, const std::string &tag) {
 
     single_gpos =
         xml_data.substr(start_position, closing_position - start_position);
+    // clean_string(single_gpos, "name=\"GA");
     gpos += single_gpos;
 
     end_position = xml_data.find(end_tag, closing_position);
@@ -192,7 +193,7 @@ std::string get_all_gpos(const std::string &xml_data, const std::string &tag) {
 }
 
 int write_csv(std::string filename, std::vector<std::string> vector1,
-              std::vector<std::string> vector2) {
+              std::vector<std::string> vector2, std::vector<std::string> heading) {
   // this function takes two vectors and writes then in the a
   // csv file
   // note that this does not check the vector size for consitency
@@ -202,7 +203,13 @@ int write_csv(std::string filename, std::vector<std::string> vector1,
     return 1;
   }
 
-  file << "Arc Length, Damage \n";
+  for (int j=0; j < heading.size(); j++){
+    if (j<heading.size()-1) {
+      file << heading[j] + ",";
+    } else {
+       file << heading[j] + "\n";   
+    }
+  }
 
   if (vector1.size() == vector2.size()) {
     for (int i = 0; i < vector1.size(); i++) {
@@ -431,20 +438,19 @@ int main(int argc, char *argv[]) {
     std::cout << gpos_list[i] << std::endl;
     damage_list.push_back(get_max_damage(file_content, gpos_list[i]));
     if (filename.find("outer") != std::string::npos) {
+      clean_string(gpos_list[i], "name=\"GA");
+      clean_string(gpos_list[i], "outer");
     } else {
-    }
+      clean_string(gpos_list[i], "name=\"GA");
+      clean_string(gpos_list[i], "inner");    }
     gpos_value_list.push_back(gpos_list[i]);
   }
 
   for (const auto &damages : damage_list) {
     std::cout << damages << std::endl;
   }
-
-  write_csv(prefix + ".csv", gpos_value_list, damage_list);
-
-  // TODO: fill the damage position structure
-  // TODO: get the piece of text corresponding the max damage
-  // TODO: fill in the cycles structure
+  std::vector<std::string> heading = {"Arc Length [m]", "Damage [-]"};
+  write_csv(prefix + ".csv", gpos_value_list, damage_list, heading);
 
   Damage_Pos cycles = get_maximum_damage_position(file_content);
   std::cout << cycles.wire << std::endl;
@@ -456,17 +462,7 @@ int main(int argc, char *argv[]) {
   std::string histogram_text = get_histogram_text(file_content, cycles);
   // std::cout << histogram_text << std::endl;
   get_histogram(histogram_text, stress_histogram);
-
-  for (auto range:stress_histogram.stress_range){
-    std::cout << "printing the range" << std::endl;
-    std::cout << range << std::endl;
-  }
-
-  for (auto cycle:stress_histogram.stress_cycles) {
-    std::cout << "printing the cycle" << std::endl;
-    std::cout << cycle << std::endl;
-  }
-
-  write_csv("test_hist.csv", stress_histogram.stress_range, stress_histogram.stress_cycles);
+  std::vector<std::string> headings_cycles = {"Stress Range [MPa]", "Cycles [-]"};
+  write_csv(prefix+"_hist.csv", stress_histogram.stress_range, stress_histogram.stress_cycles, headings_cycles);
   return 0;
 }
