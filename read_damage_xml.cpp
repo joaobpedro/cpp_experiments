@@ -19,25 +19,19 @@ struct Damage_Pos {
   Cycles_Hist *damage_hist;
 };
 
-//
-// TODO: need to be recursive function to clean all characters of a string that 
-// is passed
-//
 void clean_string(std::string &cleanee, const std::string &cleaner) {
   // cleanee -> name="GA1194500outer"
   // cleaner -> name="GA
+  size_t start_pos = 0;
+  std::string clean_string;
 
-  size_t start_pos = cleanee.find(cleaner);
-  if (start_pos == std::string::npos) {
-    cleanee.clear();
+  while (start_pos != std::string::npos){
+    start_pos = cleanee.find(cleaner);
+    if (start_pos == std::string::npos) {
+      break;
+    }
+    clean_string = cleanee.erase(start_pos, start_pos + cleaner.length());
   }
-
-  size_t end_position = start_pos + cleaner.length();
-  if (end_position == std::string::npos) {
-    cleanee.clear();
-  }
-
-  std::string clean_string = cleanee.erase(start_pos, end_position);
 }
 
 template <typename T> std::string to_long_string(T value) {
@@ -354,7 +348,6 @@ int get_histogram(const std::string &hist_text, Cycles_Hist &hist) {
                                            stress_range_end_position -
                                            stress_range_start_position);
     clean_string(stress_range_string, "\"");
-    clean_string(stress_range_string, "\""); //the clean_string function is not cleaning all characters of the same type
     hist.stress_range.push_back(stress_range_string);
     pointer = stress_range_end_position;
 
@@ -378,10 +371,9 @@ int get_histogram(const std::string &hist_text, Cycles_Hist &hist) {
       }
       pointer_aux = stress_cycles_position_2;
       value_str = cycles_substr.substr(stress_cycles_position, stress_cycles_position_2-stress_cycles_position);
+      clean_string(value_str, "\"");
       
       //convert value string in a value
-      clean_string(value_str, "\"");
-      // clean_string(value_str, "\"");
       cycles_value = std::stof(value_str);
       cycles_total += cycles_value;
       value_str.clear();
@@ -438,13 +430,9 @@ int main(int argc, char *argv[]) {
   for (int i = 1; i <= 8; i++) {
     std::cout << gpos_list[i] << std::endl;
     damage_list.push_back(get_max_damage(file_content, gpos_list[i]));
-    clean_string(gpos_list[i], "name=");
     if (filename.find("outer") != std::string::npos) {
-      clean_string(gpos_list[i], "outer");
     } else {
-      clean_string(gpos_list[i], "inner");
     }
-    clean_string(gpos_list[i], "\"GA");
     gpos_value_list.push_back(gpos_list[i]);
   }
 
